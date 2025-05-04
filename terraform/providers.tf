@@ -7,3 +7,7 @@ provider "azurerm" {
 
   subscription_id = "1e702451-e125-465b-ba86-4343891daaa8"
 }
+
+provider "github" {
+  owner = "mbrickerd"
+}

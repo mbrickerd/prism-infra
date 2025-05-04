@@ -9,6 +9,32 @@ resource "azuread_service_principal" "prism_terraform_env" {
   tags      = ["terraform", var.environment, "prism-cluster"]
 }
 
+resource "github_actions_variable" "azure_client_id" {
+  repository    = "prism-infra"
+  variable_name = "AZURE_CLIENT_ID_${upper(var.environment)}"
+  value         = module.app_registration.client_id
+}
+
+resource "github_actions_variable" "azure_subscription_id" {
+  repository    = "prism-infra"
+  variable_name = "AZURE_SUBSCRIPTION_ID"
+  value         = data.azurerm_client_config.current.subscription_id
+
+  lifecycle {
+    ignore_changes = [value]
+  }
+}
+
+resource "github_actions_variable" "azure_tenant_id" {
+  repository    = "prism-infra"
+  variable_name = "AZURE_TENANT_ID"
+  value         = data.azurerm_client_config.current.tenant_id
+
+  lifecycle {
+    ignore_changes = [value]
+  }
+}
+
 resource "azuread_application_federated_identity_credential" "github_infra_main" {
   application_id = module.app_registration.id
   display_name   = "github-infra-main"
@@ -29,8 +55,8 @@ resource "azuread_application_federated_identity_credential" "github_infra_pr" {
 
 resource "azuread_application_federated_identity_credential" "github_infra_env" {
   application_id = module.app_registration.id
-  display_name   = "github-infra-environment-${var.environment}"
-  description    = "GitHub Actions workflow identity for deployments to ${var.environment} environment in the infrastructure repository."
+  display_name   = "github-infra-${var.environment}"
+  description    = "GitHub Actions workflow identity for deployments to the ${var.environment} environment in the infrastructure repository."
   audiences      = ["api://AzureADTokenExchange"]
   issuer         = "https://token.actions.githubusercontent.com"
   subject        = "repo:mbrickerd/prism-infra:environment:${var.environment}"
@@ -42,10 +68,15 @@ module "resource_group" {
   name        = var.name
   environment = var.environment
   location    = var.location
+
+  tags = {
+    managed_by_terraform = true
+    environment          = var.environment
+  }
 }
 
 resource "azurerm_role_assignment" "resource_group_contributor" {
-  scope                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${module.resource_group.name}"
+  scope                = module.resource_group.id
   role_definition_name = "Contributor"
   principal_id         = azuread_service_principal.prism_terraform_env.id
 }
@@ -67,6 +98,11 @@ module "storage_account" {
     virtual_network_subnet_ids = []
     private_link_access        = []
   }
+
+  tags = {
+    managed_by_terraform = true
+    environment          = var.environment
+  }
 }
 
 resource "azurerm_role_assignment" "storage_blob_contributor" {
@@ -78,15 +114,33 @@ resource "azurerm_role_assignment" "storage_blob_contributor" {
 module "tfstate_storage_container" {
   source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=bf4876f9a6db8f130a27e3baa4b3c1c0400c305b"
 
-  name               = "tfstate"
-  storage_account_id = module.storage_account.id
+  name               = "${var.environment}-tfstate"
+  storage_account_id = data.azurerm_storage_account.bootstrap.id
   metadata           = {}
 }
 
-module "messages_storage_container" {
+resource "azurerm_role_assignment" "bootstrap_storage_blob_data_contributor" {
+  scope                = "${data.azurerm_storage_account.bootstrap.id}/blobServices/default/containers/tfstate"
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = azuread_service_principal.prism_terraform_env.id
+}
+
+resource "azurerm_role_assignment" "bootstrap_storage_reader" {
+  scope                = data.azurerm_storage_account.bootstrap.id
+  role_definition_name = "Reader"
+  principal_id         = azuread_service_principal.prism_terraform_env.id
+}
+
+resource "azurerm_role_assignment" "bootstrap_storage_key_operator" {
+  scope                = data.azurerm_storage_account.bootstrap.id
+  role_definition_name = "Storage Account Key Operator Service Role"
+  principal_id         = azuread_service_principal.prism_terraform_env.id
+}
+
+module "sensors_storage_container" {
   source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=bf4876f9a6db8f130a27e3baa4b3c1c0400c305b"
 
-  name               = "messages"
+  name               = "sensors"
   storage_account_id = module.storage_account.id
   metadata           = {}
 }

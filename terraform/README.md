@@ -13,14 +13,15 @@
 |------|---------|
 | <a name="provider_azuread"></a> [azuread](#provider\_azuread) | 2.47.0 |
 | <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | 4.27.0 |
+| <a name="provider_github"></a> [github](#provider\_github) | 6.6.0 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_app_registration"></a> [app\_registration](#module\_app\_registration) | git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/app-registration | bf4876f9a6db8f130a27e3baa4b3c1c0400c305b |
-| <a name="module_messages_storage_container"></a> [messages\_storage\_container](#module\_messages\_storage\_container) | git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container | bf4876f9a6db8f130a27e3baa4b3c1c0400c305b |
 | <a name="module_resource_group"></a> [resource\_group](#module\_resource\_group) | git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/resource-group | bf4876f9a6db8f130a27e3baa4b3c1c0400c305b |
+| <a name="module_sensors_storage_container"></a> [sensors\_storage\_container](#module\_sensors\_storage\_container) | git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container | bf4876f9a6db8f130a27e3baa4b3c1c0400c305b |
 | <a name="module_storage_account"></a> [storage\_account](#module\_storage\_account) | git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-account | bf4876f9a6db8f130a27e3baa4b3c1c0400c305b |
 | <a name="module_tfstate_storage_container"></a> [tfstate\_storage\_container](#module\_tfstate\_storage\_container) | git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container | bf4876f9a6db8f130a27e3baa4b3c1c0400c305b |
 
@@ -32,9 +33,17 @@
 | [azuread_application_federated_identity_credential.github_infra_main](https://registry.terraform.io/providers/hashicorp/azuread/latest/docs/resources/application_federated_identity_credential) | resource |
 | [azuread_application_federated_identity_credential.github_infra_pr](https://registry.terraform.io/providers/hashicorp/azuread/latest/docs/resources/application_federated_identity_credential) | resource |
 | [azuread_service_principal.prism_terraform_env](https://registry.terraform.io/providers/hashicorp/azuread/latest/docs/resources/service_principal) | resource |
+| [azurerm_role_assignment.bootstrap_storage_blob_data_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
+| [azurerm_role_assignment.bootstrap_storage_key_operator](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
+| [azurerm_role_assignment.bootstrap_storage_reader](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
 | [azurerm_role_assignment.resource_group_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
 | [azurerm_role_assignment.storage_blob_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
+| [github_actions_variable.azure_client_id](https://registry.terraform.io/providers/hashicorp/github/latest/docs/resources/actions_variable) | resource |
+| [github_actions_variable.azure_subscription_id](https://registry.terraform.io/providers/hashicorp/github/latest/docs/resources/actions_variable) | resource |
+| [github_actions_variable.azure_tenant_id](https://registry.terraform.io/providers/hashicorp/github/latest/docs/resources/actions_variable) | resource |
 | [azurerm_client_config.current](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/client_config) | data source |
+| [azurerm_resource_group.bootstrap](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/resource_group) | data source |
+| [azurerm_storage_account.bootstrap](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/storage_account) | data source |
 
 ## Inputs
 

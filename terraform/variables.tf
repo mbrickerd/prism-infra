@@ -20,3 +20,14 @@ variable "location" {
   type        = string
   default     = "westeurope"
 }
+
+variable "tenant_id" {
+  description = "The Azure Tenant ID."
+  type        = string
+}
+
+variable "tags" {
+  description = "A mapping of tags to add to all resources."
+  type        = map(string)
+  default     = {}
+}

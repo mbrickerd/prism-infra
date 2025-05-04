@@ -1,5 +1,5 @@
 module "app_registration" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/app-registration?ref=bf4876f9a6db8f130a27e3baa4b3c1c0400c305b"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/app-registration?ref=adaba05748629041d1ee8066abdf009ab4f8aec1"
 
   display_name = "mb-prism-sensor-clustering-${var.environment}"
 }
@@ -59,7 +59,7 @@ resource "azuread_application_federated_identity_credential" "github_infra_env" 
 }
 
 module "resource_group" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/resource-group?ref=bf4876f9a6db8f130a27e3baa4b3c1c0400c305b"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/resource-group?ref=adaba05748629041d1ee8066abdf009ab4f8aec1"
 
   name        = var.name
   environment = var.environment
@@ -78,7 +78,7 @@ resource "azurerm_role_assignment" "resource_group_contributor" {
 }
 
 module "storage_account" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-account?ref=bf4876f9a6db8f130a27e3baa4b3c1c0400c305b"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-account?ref=adaba05748629041d1ee8066abdf009ab4f8aec1"
 
   resource_group_name           = module.resource_group.name
   name                          = var.name
@@ -108,7 +108,7 @@ resource "azurerm_role_assignment" "storage_blob_contributor" {
 }
 
 module "tfstate_storage_container" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=bf4876f9a6db8f130a27e3baa4b3c1c0400c305b"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=adaba05748629041d1ee8066abdf009ab4f8aec1"
 
   name               = "${var.environment}-tfstate"
   storage_account_id = data.azurerm_storage_account.bootstrap.id
@@ -134,9 +134,27 @@ resource "azurerm_role_assignment" "bootstrap_storage_key_operator" {
 }
 
 module "sensors_storage_container" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=bf4876f9a6db8f130a27e3baa4b3c1c0400c305b"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=adaba05748629041d1ee8066abdf009ab4f8aec1"
 
   name               = "sensors"
   storage_account_id = module.storage_account.id
   metadata           = {}
+}
+
+module "eventhub_namespace" {
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/eventhub-namespace?ref=adaba05748629041d1ee8066abdf009ab4f8aec1"
+
+  resource_group_name          = module.resource_group.name
+  name                         = var.name
+  location                     = var.location
+  sku                          = "Standard"
+  capacity                     = 1
+  local_authentication_enabled = true
+  auto_inflate_enabled         = true
+  maximum_throughput_units     = 3
+
+  tags = {
+    managed_by_terraform = true
+    environment          = var.environment
+  }
 }

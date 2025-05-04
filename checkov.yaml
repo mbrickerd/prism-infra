@@ -1,0 +1,4 @@
+directory: terraform
+compact: true
+quiet: true
+framework: terraform

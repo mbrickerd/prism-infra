@@ -1,0 +1,101 @@
+name: PRISM Infrastructure CD
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+    inputs:
+      deploy_to_production:
+        description: 'Deploy to production'
+        type: boolean
+        default: false
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_to_production == 'true' && 'prd' || 'dev' }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set Environment Variable
+        id: set-env
+        run: |
+          ENV=${{ github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_to_production == 'true' && 'prd' || 'dev' }}
+          echo "ENV=$ENV" >> $GITHUB_ENV
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars[format('AZURE_CLIENT_ID_{0}', env.ENV)] }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.11.2
+
+      - name: Terraform Init
+        run: |
+          terraform -chdir=./terraform init \
+            -backend-config="resource_group_name=rg-prism-cluster-${{ env.ENV }}" \
+            -backend-config="storage_account_name=saprismcluster${{ env.ENV }}" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=terraform.tfstate"
+        env:
+          ARM_CLIENT_ID: ${{ vars[format('AZURE_CLIENT_ID_{0}', env.ENV)] }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          ARM_USE_OIDC: true
+
+      - name: Terraform Format Check
+        uses: dflook/terraform-fmt-check@v1
+        with:
+          path: ./terraform
+
+      - name: Terraform Validate
+        uses: dflook/terraform-validate@v1
+        with:
+          path: ./terraform
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: ./terraform
+          framework: terraform
+          config_file: ./checkov.yaml
+
+      - name: Terraform Plan
+        uses: dflook/terraform-plan@v1
+        with:
+          path: ./terraform
+          variables: |
+            environment="${{ env.ENV }}"
+        env:
+          ARM_CLIENT_ID: ${{ vars[format('AZURE_CLIENT_ID_{0}', env.ENV)] }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          ARM_USE_OIDC: true
+
+      - name: Terraform Apply
+        uses: dflook/terraform-apply@v1
+        with:
+          path: ./terraform
+          variables: |
+            environment="${{ env.ENV }}"
+          auto_approve: true
+        env:
+          ARM_CLIENT_ID: ${{ vars[format('AZURE_CLIENT_ID_{0}', env.ENV)] }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          ARM_USE_OIDC: true

@@ -1,0 +1,43 @@
+name: PRISM Infrastructure CI
+
+on:
+  pull_request:
+    branches: ['main']
+
+jobs:
+  ci:
+    name: Pre-commit checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.11.2"
+
+      - name: Cache pre-commit hooks
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pre-commit
+            ~/.cache/pre-commit-hooks
+          key: pre-commit-3|${{ env.pythonLocation }} | ${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Pre-commit installation
+        id: pre-commit-install
+        run: |
+          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+          pip install pre-commit
+          pre-commit install
+
+      - name: Pre-commit validation
+        id: pre-commit
+        run: pre-commit run --all-files

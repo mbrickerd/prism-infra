@@ -164,7 +164,7 @@ module "log_analytics" {
 }
 
 module "aks" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/log-analytics?ref=45f9e06212127b9be88dad69b792eddd1854b952"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/kubernetes-cluster?ref=45f9e06212127b9be88dad69b792eddd1854b952"
 
   resource_group_name = module.resource_group.name
   name                = var.name

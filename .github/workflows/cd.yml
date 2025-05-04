@@ -31,12 +31,14 @@ jobs:
         id: set-env
         run: |
           ENV=${{ github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_to_production == 'true' && 'prd' || 'dev' }}
+          ENV_UPPER=$(echo $ENV | tr '[:lower:]' '[:upper:]')
           echo "ENV=$ENV" >> $GITHUB_ENV
+          echo "ENV_UPPER=$ENV_UPPER" >> $GITHUB_ENV
 
       - name: Azure Login
         uses: azure/login@v2
         with:
-          client-id: ${{ vars[format('AZURE_CLIENT_ID_{0}', env.ENV)] }}
+          client-id: ${{ vars[format('AZURE_CLIENT_ID_{0}', env.ENV_UPPER)] }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
@@ -53,7 +55,7 @@ jobs:
             -backend-config="container_name=tfstate" \
             -backend-config="key=terraform.tfstate"
         env:
-          ARM_CLIENT_ID: ${{ vars[format('AZURE_CLIENT_ID_{0}', env.ENV)] }}
+          ARM_CLIENT_ID: ${{ vars[format('AZURE_CLIENT_ID_{0}', env.ENV_UPPER)] }}
           ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           ARM_USE_OIDC: true
@@ -82,7 +84,7 @@ jobs:
           variables: |
             environment="${{ env.ENV }}"
         env:
-          ARM_CLIENT_ID: ${{ vars[format('AZURE_CLIENT_ID_{0}', env.ENV)] }}
+          ARM_CLIENT_ID: ${{ vars[format('AZURE_CLIENT_ID_{0}', env.ENV_UPPER)] }}
           ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           ARM_USE_OIDC: true
@@ -95,7 +97,7 @@ jobs:
             environment="${{ env.ENV }}"
           auto_approve: true
         env:
-          ARM_CLIENT_ID: ${{ vars[format('AZURE_CLIENT_ID_{0}', env.ENV)] }}
+          ARM_CLIENT_ID: ${{ vars[format('AZURE_CLIENT_ID_{0}', env.ENV_UPPER)] }}
           ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           ARM_USE_OIDC: true

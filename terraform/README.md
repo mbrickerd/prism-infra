@@ -11,8 +11,8 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_azuread"></a> [azuread](#provider\_azuread) | ~> 2.47.0 |
-| <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | ~> 4.0 |
+| <a name="provider_azuread"></a> [azuread](#provider\_azuread) | 2.47.0 |
+| <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | 4.27.0 |
 
 ## Modules
 
@@ -28,6 +28,7 @@
 
 | Name | Type |
 |------|------|
+| [azuread_application_federated_identity_credential.github_infra_env](https://registry.terraform.io/providers/hashicorp/azuread/latest/docs/resources/application_federated_identity_credential) | resource |
 | [azuread_application_federated_identity_credential.github_infra_main](https://registry.terraform.io/providers/hashicorp/azuread/latest/docs/resources/application_federated_identity_credential) | resource |
 | [azuread_application_federated_identity_credential.github_infra_pr](https://registry.terraform.io/providers/hashicorp/azuread/latest/docs/resources/application_federated_identity_credential) | resource |
 | [azuread_service_principal.prism_terraform_env](https://registry.terraform.io/providers/hashicorp/azuread/latest/docs/resources/service_principal) | resource |

@@ -27,6 +27,15 @@ resource "azuread_application_federated_identity_credential" "github_infra_pr" {
   subject        = "repo:mbrickerd/prism-infra:pull_request"
 }
 
+resource "azuread_application_federated_identity_credential" "github_infra_env" {
+  application_id = module.app_registration.id
+  display_name   = "github-infra-environment-${var.environment}"
+  description    = "GitHub Actions workflow identity for deployments to ${var.environment} environment in the infrastructure repository."
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://token.actions.githubusercontent.com"
+  subject        = "repo:mbrickerd/prism-infra:environment:${var.environment}"
+}
+
 module "resource_group" {
   source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/resource-group?ref=bf4876f9a6db8f130a27e3baa4b3c1c0400c305b"
 

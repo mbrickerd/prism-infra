@@ -17,6 +17,9 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  ARM_USE_OIDC: true
+
 jobs:
   deploy:
     name: Deploy Infrastructure
@@ -35,17 +38,17 @@ jobs:
           echo "ENV=$ENV" >> $GITHUB_ENV
           echo "ENV_UPPER=$ENV_UPPER" >> $GITHUB_ENV
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.11.2
+
       - name: Azure Login
         uses: azure/login@v2
         with:
           client-id: ${{ vars[format('AZURE_CLIENT_ID_{0}', env.ENV_UPPER)] }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.11.2
 
       - name: Terraform Init
         run: |
@@ -61,14 +64,12 @@ jobs:
           ARM_USE_OIDC: true
 
       - name: Terraform Format Check
-        uses: dflook/terraform-fmt-check@v1
-        with:
-          path: ./terraform
+        working-directory: ./terraform
+        run: terraform fmt -check
 
       - name: Terraform Validate
-        uses: dflook/terraform-validate@v1
-        with:
-          path: ./terraform
+        working-directory: ./terraform
+        run: terraform validate
 
       - name: Run Checkov
         uses: bridgecrewio/checkov-action@master
@@ -78,11 +79,8 @@ jobs:
           config_file: ./checkov.yaml
 
       - name: Terraform Plan
-        uses: dflook/terraform-plan@v1
-        with:
-          path: ./terraform
-          variables: |
-            environment="${{ env.ENV }}"
+        working-directory: ./terraform
+        run: terraform plan -var 'name=${{ env.ENV }}' -out=plan.tfplan
         env:
           ARM_CLIENT_ID: ${{ vars[format('AZURE_CLIENT_ID_{0}', env.ENV_UPPER)] }}
           ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
@@ -90,12 +88,9 @@ jobs:
           ARM_USE_OIDC: true
 
       - name: Terraform Apply
-        uses: dflook/terraform-apply@v1
-        with:
-          path: ./terraform
-          variables: |
-            environment="${{ env.ENV }}"
-          auto_approve: true
+        working-directory: ./terraform
+        run: terraform apply -auto-approve plan.tfplan
+
         env:
           ARM_CLIENT_ID: ${{ vars[format('AZURE_CLIENT_ID_{0}', env.ENV_UPPER)] }}
           ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}

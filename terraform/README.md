@@ -22,6 +22,7 @@
 | <a name="module_messages_storage_container"></a> [messages\_storage\_container](#module\_messages\_storage\_container) | git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container | bf4876f9a6db8f130a27e3baa4b3c1c0400c305b |
 | <a name="module_resource_group"></a> [resource\_group](#module\_resource\_group) | git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/resource-group | bf4876f9a6db8f130a27e3baa4b3c1c0400c305b |
 | <a name="module_storage_account"></a> [storage\_account](#module\_storage\_account) | git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-account | bf4876f9a6db8f130a27e3baa4b3c1c0400c305b |
+| <a name="module_tfstate_storage_container"></a> [tfstate\_storage\_container](#module\_tfstate\_storage\_container) | git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container | bf4876f9a6db8f130a27e3baa4b3c1c0400c305b |
 
 ## Resources
 

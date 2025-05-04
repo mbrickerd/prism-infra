@@ -66,6 +66,14 @@ resource "azurerm_role_assignment" "storage_blob_contributor" {
   principal_id         = azuread_service_principal.prism_terraform_env.id
 }
 
+module "tfstate_storage_container" {
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=bf4876f9a6db8f130a27e3baa4b3c1c0400c305b"
+
+  name               = "tfstate"
+  storage_account_id = module.storage_account.id
+  metadata           = {}
+}
+
 module "messages_storage_container" {
   source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=bf4876f9a6db8f130a27e3baa4b3c1c0400c305b"
 

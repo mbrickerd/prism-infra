@@ -1,5 +1,5 @@
 module "app_registration" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/app-registration?ref=adaba05748629041d1ee8066abdf009ab4f8aec1"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/app-registration?ref=45f9e06212127b9be88dad69b792eddd1854b952"
 
   display_name = "mb-prism-sensor-clustering-${var.environment}"
 }
@@ -59,16 +59,13 @@ resource "azuread_application_federated_identity_credential" "github_infra_env" 
 }
 
 module "resource_group" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/resource-group?ref=adaba05748629041d1ee8066abdf009ab4f8aec1"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/resource-group?ref=45f9e06212127b9be88dad69b792eddd1854b952"
 
   name        = var.name
   environment = var.environment
   location    = var.location
 
-  tags = {
-    managed_by_terraform = true
-    environment          = var.environment
-  }
+  tags = local.tags
 }
 
 resource "azurerm_role_assignment" "resource_group_contributor" {
@@ -78,7 +75,7 @@ resource "azurerm_role_assignment" "resource_group_contributor" {
 }
 
 module "storage_account" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-account?ref=adaba05748629041d1ee8066abdf009ab4f8aec1"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-account?ref=45f9e06212127b9be88dad69b792eddd1854b952"
 
   resource_group_name           = module.resource_group.name
   name                          = var.name
@@ -95,10 +92,7 @@ module "storage_account" {
     private_link_access        = []
   }
 
-  tags = {
-    managed_by_terraform = true
-    environment          = var.environment
-  }
+  tags = local.tags
 }
 
 resource "azurerm_role_assignment" "storage_blob_contributor" {
@@ -108,7 +102,7 @@ resource "azurerm_role_assignment" "storage_blob_contributor" {
 }
 
 module "tfstate_storage_container" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=adaba05748629041d1ee8066abdf009ab4f8aec1"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=45f9e06212127b9be88dad69b792eddd1854b952"
 
   name               = "${var.environment}-tfstate"
   storage_account_id = data.azurerm_storage_account.bootstrap.id
@@ -134,7 +128,7 @@ resource "azurerm_role_assignment" "bootstrap_storage_key_operator" {
 }
 
 module "sensors_storage_container" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=adaba05748629041d1ee8066abdf009ab4f8aec1"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=45f9e06212127b9be88dad69b792eddd1854b952"
 
   name               = "sensors"
   storage_account_id = module.storage_account.id
@@ -142,7 +136,7 @@ module "sensors_storage_container" {
 }
 
 module "eventhub_namespace" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/eventhub-namespace?ref=adaba05748629041d1ee8066abdf009ab4f8aec1"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/eventhub-namespace?ref=45f9e06212127b9be88dad69b792eddd1854b952"
 
   resource_group_name          = module.resource_group.name
   name                         = var.name
@@ -153,8 +147,79 @@ module "eventhub_namespace" {
   auto_inflate_enabled         = true
   maximum_throughput_units     = 3
 
-  tags = {
-    managed_by_terraform = true
-    environment          = var.environment
-  }
+  tags = local.tags
+}
+
+module "log_analytics" {
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/log-analytics?ref=45f9e06212127b9be88dad69b792eddd1854b952"
+
+  resource_group_name       = module.resource_group.name
+  name                      = var.name
+  environment               = var.environment
+  location                  = var.location
+  retention_in_days         = 30
+  enable_container_insights = true
+
+  tags = local.tags
+}
+
+module "aks" {
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/log-analytics?ref=45f9e06212127b9be88dad69b792eddd1854b952"
+
+  resource_group_name = module.resource_group.name
+  name                = var.name
+  environment         = var.environment
+  location            = var.location
+  kubernetes_version  = "1.31.7"
+  tenant_id           = var.tenant_id
+
+  default_node_pool_vm_size = "Standard_A2_v2"
+  os_disk_size_gb           = 128
+  enable_auto_scaling       = true
+  min_count                 = 2
+  max_count                 = 5
+
+  network_plugin      = "azure"
+  network_plugin_mode = "overlay"
+  pod_cidr            = "10.244.0.0/16"
+  service_cidr        = "10.0.0.0/16"
+  dns_service_ip      = "10.0.0.10"
+
+  local_account_disabled            = true
+  enable_key_vault_secrets_provider = true
+  key_vault_rotation_enabled        = false
+  key_vault_rotation_interval       = "2m"
+
+  log_analytics_workspace_id = module.log_analytics.id
+  enable_prometheus          = true
+  enable_grafana             = true
+
+  additional_prometheus_rules = [
+    {
+      name        = "KubernetesRecordingRules"
+      description = "Recording rules for Kubernetes metrics"
+    },
+    {
+      name        = "NodeAndKubernetesRecordingRulesWin"
+      description = "Recording rules for Windows Node and Kubernetes metrics"
+    },
+    {
+      name        = "NodeRecordingRules"
+      description = "Recording rules for Node metrics"
+    },
+    {
+      name        = "NodeRecordingRulesWin"
+      description = "Recording rules for Windows Node metrics"
+    },
+    {
+      name        = "UXRecordingRules"
+      description = "Recording rules for UX metrics"
+    },
+    {
+      name        = "UXRecordingRulesWin"
+      description = "Recording rules for Windows UX metrics"
+    }
+  ]
+
+  tags = local.tags
 }

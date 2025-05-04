@@ -16,25 +16,19 @@ resource "github_actions_variable" "azure_client_id" {
 }
 
 resource "github_actions_variable" "azure_subscription_id" {
+  count = local.create_shared_variables ? 1 : 0
+
   repository    = "prism-infra"
   variable_name = "AZURE_SUBSCRIPTION_ID"
   value         = data.azurerm_client_config.current.subscription_id
-
-  lifecycle {
-    ignore_changes        = [value]
-    create_before_destroy = true
-  }
 }
 
 resource "github_actions_variable" "azure_tenant_id" {
+  count = local.create_shared_variables ? 1 : 0
+
   repository    = "prism-infra"
   variable_name = "AZURE_TENANT_ID"
   value         = data.azurerm_client_config.current.tenant_id
-
-  lifecycle {
-    ignore_changes        = [value]
-    create_before_destroy = true
-  }
 }
 
 resource "azuread_application_federated_identity_credential" "github_infra_main" {

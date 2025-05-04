@@ -21,7 +21,8 @@ resource "github_actions_variable" "azure_subscription_id" {
   value         = data.azurerm_client_config.current.subscription_id
 
   lifecycle {
-    ignore_changes = [value]
+    ignore_changes        = [value]
+    create_before_destroy = true
   }
 }
 
@@ -31,7 +32,8 @@ resource "github_actions_variable" "azure_tenant_id" {
   value         = data.azurerm_client_config.current.tenant_id
 
   lifecycle {
-    ignore_changes = [value]
+    ignore_changes        = [value]
+    create_before_destroy = true
   }
 }
 

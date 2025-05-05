@@ -208,7 +208,7 @@ module "key_vault" {
 
   sku_name = "standard"
   network_acls = {
-    bypass                     = ["AzureServices"]
+    bypass                     = "AzureServices"
     default_action             = "Allow"
     ip_rules                   = []
     virtual_network_subnet_ids = []

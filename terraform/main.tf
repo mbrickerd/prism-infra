@@ -195,10 +195,8 @@ module "aks" {
   enable_prometheus          = true
   enable_grafana             = true
 
-  azure_monitor_profile {
-    metrics {
-      enabled = true
-    }
+  monitor_metrics {
+    azure_monitor_workspace_id = module.log_analytics.id
   }
 
   tags = local.tags

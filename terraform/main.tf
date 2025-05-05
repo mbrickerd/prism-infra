@@ -198,6 +198,62 @@ module "aks" {
   tags = local.tags
 }
 
+module "vnet" {
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/virtual-network?ref=ff110419534d29dd42faeed398d20d0bab93198e"
+
+  resource_group_name = module.resource_group.name
+  name                = var.name
+  environment         = var.environment
+  location            = var.location
+  address_space       = ["10.1.0.0/16"]
+  subnet              = []
+  encryption = {
+    enforcement = "AllowUnencrypted"
+  }
+  flow_timeout_in_minutes = 10
+
+  tags = local.tags
+}
+
+module "keyvault_subnet" {
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/subnet?ref=ff110419534d29dd42faeed398d20d0bab93198e"
+
+  resource_group_name               = module.resource_group.name
+  name                              = "keyvault"
+  environment                       = var.environment
+  virtual_network_name              = module.vnet.name
+  address_prefixes                  = ["10.1.1.0/24"]
+  service_endpoints                 = ["Microsoft.KeyVault"]
+  private_endpoint_network_policies = "Disabled"
+}
+
+module "aks_subnet" {
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/subnet?ref=ff110419534d29dd42faeed398d20d0bab93198e"
+
+  resource_group_name  = module.resource_group.name
+  name                 = "aks"
+  environment          = var.environment
+  virtual_network_name = module.vnet.name
+  address_prefixes     = ["10.1.2.0/24"]
+  service_endpoints    = ["Microsoft.KeyVault"]
+}
+
+resource "azurerm_private_dns_zone" "keyvault" {
+  name                = "privatelink.vaultcore.azure.net"
+  resource_group_name = module.resource_group.name
+
+  tags = local.tags
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "keyvault" {
+  name                  = "dns-link-${var.name}-${var.environment}"
+  resource_group_name   = module.resource_group.name
+  private_dns_zone_name = azurerm_private_dns_zone.keyvault.name
+  virtual_network_id    = module.vnet.id
+
+  tags = local.tags
+}
+
 module "key_vault" {
   source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/key-vault?ref=ff110419534d29dd42faeed398d20d0bab93198e"
 
@@ -209,33 +265,31 @@ module "key_vault" {
   sku_name = "standard"
   network_acls = {
     bypass                     = "AzureServices"
-    default_action             = "Allow"
+    default_action             = "Deny"
     ip_rules                   = []
-    virtual_network_subnet_ids = []
+    virtual_network_subnet_ids = [module.keyvault_subnet.id, module.aks_subnet.id]
   }
 
-  soft_delete_retention_days = 90
-  purge_protection_enabled   = false
-
+  soft_delete_retention_days  = 90
+  purge_protection_enabled    = false
   enabled_for_disk_encryption = true
 
-  private_endpoint_enabled   = false
-  private_endpoint_subnet_id = null
-  private_dns_zone_id        = null
+  private_endpoint_enabled   = true
+  private_endpoint_subnet_id = module.keyvault_subnet.id
+  private_dns_zone_id        = azurerm_private_dns_zone.keyvault.id
+
+  rbac_assignments = [
+    {
+      principal_id = azuread_service_principal.prism_terraform_env.id
+      role_name    = "Key Vault Secrets Officer"
+    },
+    {
+      principal_id = azuread_service_principal.prism_terraform_env.id
+      role_name    = "Key Vault Administrator"
+    }
+  ]
 
   tags = local.tags
-}
-
-resource "azurerm_role_assignment" "kv_secrets_officer" {
-  scope                = module.key_vault.id
-  role_definition_name = "Key Vault Secrets Officer"
-  principal_id         = azuread_service_principal.prism_terraform_env.id
-}
-
-resource "azurerm_role_assignment" "kv_administrator" {
-  scope                = module.key_vault.id
-  role_definition_name = "Key Vault Administrator"
-  principal_id         = azuread_service_principal.prism_terraform_env.id
 }
 
 module "key_vault_secrets" {

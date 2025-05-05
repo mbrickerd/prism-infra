@@ -206,8 +206,13 @@ module "key_vault" {
   location            = var.location
   tenant_id           = data.azurerm_client_config.current.tenant_id
 
-  sku_name                      = "standard"
-  public_network_access_enabled = true
+  sku_name = "standard"
+  network_acls = {
+    bypass                     = ["AzureServices"]
+    default_action             = "Allow"
+    ip_rules                   = []
+    virtual_network_subnet_ids = []
+  }
 
   soft_delete_retention_days = 90
   purge_protection_enabled   = false

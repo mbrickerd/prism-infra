@@ -1,5 +1,5 @@
 module "app_registration" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/app-registration?ref=ce12e8f731df6aa3d40e9b1000dcd0722a62a73e"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/app-registration?ref=95eb0a47c109b9da4d50c925aa873d84ee75ac7a"
 
   display_name = "mb-prism-sensor-clustering-${var.environment}"
 }
@@ -59,7 +59,7 @@ resource "azuread_application_federated_identity_credential" "github_infra_env" 
 }
 
 module "resource_group" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/resource-group?ref=ce12e8f731df6aa3d40e9b1000dcd0722a62a73e"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/resource-group?ref=95eb0a47c109b9da4d50c925aa873d84ee75ac7a"
 
   name        = var.name
   environment = var.environment
@@ -75,7 +75,7 @@ resource "azurerm_role_assignment" "resource_group_contributor" {
 }
 
 module "storage_account" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-account?ref=ce12e8f731df6aa3d40e9b1000dcd0722a62a73e"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-account?ref=95eb0a47c109b9da4d50c925aa873d84ee75ac7a"
 
   resource_group_name           = module.resource_group.name
   name                          = var.name
@@ -102,7 +102,7 @@ resource "azurerm_role_assignment" "storage_blob_contributor" {
 }
 
 module "tfstate_storage_container" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=ce12e8f731df6aa3d40e9b1000dcd0722a62a73e"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=95eb0a47c109b9da4d50c925aa873d84ee75ac7a"
 
   name               = "${var.environment}-tfstate"
   storage_account_id = data.azurerm_storage_account.bootstrap.id
@@ -128,7 +128,7 @@ resource "azurerm_role_assignment" "bootstrap_storage_key_operator" {
 }
 
 module "sensors_storage_container" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=ce12e8f731df6aa3d40e9b1000dcd0722a62a73e"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=95eb0a47c109b9da4d50c925aa873d84ee75ac7a"
 
   name               = "sensors"
   storage_account_id = module.storage_account.id
@@ -136,7 +136,7 @@ module "sensors_storage_container" {
 }
 
 module "eventhub_namespace" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/eventhub-namespace?ref=ce12e8f731df6aa3d40e9b1000dcd0722a62a73e"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/eventhub-namespace?ref=95eb0a47c109b9da4d50c925aa873d84ee75ac7a"
 
   resource_group_name          = module.resource_group.name
   name                         = var.name
@@ -151,7 +151,7 @@ module "eventhub_namespace" {
 }
 
 module "log_analytics" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/log-analytics?ref=ce12e8f731df6aa3d40e9b1000dcd0722a62a73e"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/log-analytics?ref=95eb0a47c109b9da4d50c925aa873d84ee75ac7a"
 
   resource_group_name       = module.resource_group.name
   name                      = var.name
@@ -164,7 +164,7 @@ module "log_analytics" {
 }
 
 module "aks" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/kubernetes-cluster?ref=ce12e8f731df6aa3d40e9b1000dcd0722a62a73e"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/kubernetes-cluster?ref=95eb0a47c109b9da4d50c925aa873d84ee75ac7a"
 
   resource_group_name = module.resource_group.name
   name                = var.name
@@ -175,7 +175,7 @@ module "aks" {
 
   default_node_pool_vm_size = "Standard_A2_v2"
   os_disk_size_gb           = 128
-  enable_auto_scaling       = true
+  auto_scaling_enabled      = true
   min_count                 = 2
   max_count                 = 5
   node_count                = null

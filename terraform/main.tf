@@ -1,5 +1,5 @@
 module "app_registration" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/app-registration?ref=446c9497c8b98f609f5da7036828526b3a1b7670"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/app-registration?ref=1307e0391fb15460a1a7c8c2a50144f7ebe8de8f"
 
   display_name = "mb-prism-sensor-clustering-${var.environment}"
 }
@@ -59,7 +59,7 @@ resource "azuread_application_federated_identity_credential" "github_infra_env" 
 }
 
 module "resource_group" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/resource-group?ref=446c9497c8b98f609f5da7036828526b3a1b7670"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/resource-group?ref=1307e0391fb15460a1a7c8c2a50144f7ebe8de8f"
 
   name        = var.name
   environment = var.environment
@@ -75,7 +75,7 @@ resource "azurerm_role_assignment" "resource_group_contributor" {
 }
 
 module "storage_account" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-account?ref=446c9497c8b98f609f5da7036828526b3a1b7670"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-account?ref=1307e0391fb15460a1a7c8c2a50144f7ebe8de8f"
 
   resource_group_name           = module.resource_group.name
   name                          = var.name
@@ -102,7 +102,7 @@ resource "azurerm_role_assignment" "storage_blob_contributor" {
 }
 
 module "tfstate_storage_container" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=446c9497c8b98f609f5da7036828526b3a1b7670"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=1307e0391fb15460a1a7c8c2a50144f7ebe8de8f"
 
   name               = "${var.environment}-tfstate"
   storage_account_id = data.azurerm_storage_account.bootstrap.id
@@ -128,7 +128,7 @@ resource "azurerm_role_assignment" "bootstrap_storage_key_operator" {
 }
 
 module "sensors_storage_container" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=446c9497c8b98f609f5da7036828526b3a1b7670"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=1307e0391fb15460a1a7c8c2a50144f7ebe8de8f"
 
   name               = "sensors"
   storage_account_id = module.storage_account.id
@@ -136,7 +136,7 @@ module "sensors_storage_container" {
 }
 
 module "eventhub_namespace" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/eventhub-namespace?ref=446c9497c8b98f609f5da7036828526b3a1b7670"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/eventhub-namespace?ref=1307e0391fb15460a1a7c8c2a50144f7ebe8de8f"
 
   resource_group_name          = module.resource_group.name
   name                         = var.name
@@ -151,7 +151,7 @@ module "eventhub_namespace" {
 }
 
 module "log_analytics" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/log-analytics?ref=446c9497c8b98f609f5da7036828526b3a1b7670"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/log-analytics?ref=1307e0391fb15460a1a7c8c2a50144f7ebe8de8f"
 
   resource_group_name       = module.resource_group.name
   name                      = var.name
@@ -164,7 +164,7 @@ module "log_analytics" {
 }
 
 module "aks" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/kubernetes-cluster?ref=446c9497c8b98f609f5da7036828526b3a1b7670"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/kubernetes-cluster?ref=1307e0391fb15460a1a7c8c2a50144f7ebe8de8f"
 
   resource_group_name = module.resource_group.name
   name                = var.name
@@ -195,9 +195,52 @@ module "aks" {
   enable_prometheus          = true
   enable_grafana             = true
 
-  monitor_metrics {
-    azure_monitor_workspace_id = module.log_analytics.id
-  }
+  tags = local.tags
+}
+
+module "key_vault" {
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/key-vault?ref=ff110419534d29dd42faeed398d20d0bab93198e"
+
+  resource_group_name = module.resource_group.name
+  name                = var.name
+  location            = var.location
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+
+  sku_name = "standard"
+
+  soft_delete_retention_days = 90
+  purge_protection_enabled   = false
+
+  enabled_for_disk_encryption = true
+
+  private_endpoint_enabled   = false
+  private_endpoint_subnet_id = null
+  private_dns_zone_id        = null
 
   tags = local.tags
+}
+
+resource "azurerm_role_assignment" "kv_secrets_officer" {
+  scope                = module.key_vault.id
+  role_definition_name = "Key Vault Secrets Officer"
+  principal_id         = azuread_service_principal.prism_terraform_env.id
+}
+
+resource "azurerm_role_assignment" "kv_administrator" {
+  scope                = module.key_vault.id
+  role_definition_name = "Key Vault Administrator"
+  principal_id         = azuread_service_principal.prism_terraform_env.id
+}
+
+module "key_vault_secrets" {
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/key-vault-secret?ref=3142ff88ecc04fa09b7f6a15aad93909764675d6"
+
+  for_each = local.secrets
+
+  key_vault_id    = module.key_vault.id
+  name            = each.key
+  content         = each.value.content
+  content_type    = each.value.content_type
+  expiration_date = try(each.value.expiration_date, null)
+  tags            = try(each.value.tags, null)
 }

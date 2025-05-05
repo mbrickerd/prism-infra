@@ -1,5 +1,5 @@
 module "app_registration" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/app-registration?ref=c5433eeab8738e2a40d45665167a3d7d83bf1b03"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/app-registration?ref=ce12e8f731df6aa3d40e9b1000dcd0722a62a73e"
 
   display_name = "mb-prism-sensor-clustering-${var.environment}"
 }
@@ -59,7 +59,7 @@ resource "azuread_application_federated_identity_credential" "github_infra_env" 
 }
 
 module "resource_group" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/resource-group?ref=c5433eeab8738e2a40d45665167a3d7d83bf1b03"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/resource-group?ref=ce12e8f731df6aa3d40e9b1000dcd0722a62a73e"
 
   name        = var.name
   environment = var.environment
@@ -75,7 +75,7 @@ resource "azurerm_role_assignment" "resource_group_contributor" {
 }
 
 module "storage_account" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-account?ref=c5433eeab8738e2a40d45665167a3d7d83bf1b03"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-account?ref=ce12e8f731df6aa3d40e9b1000dcd0722a62a73e"
 
   resource_group_name           = module.resource_group.name
   name                          = var.name
@@ -102,7 +102,7 @@ resource "azurerm_role_assignment" "storage_blob_contributor" {
 }
 
 module "tfstate_storage_container" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=c5433eeab8738e2a40d45665167a3d7d83bf1b03"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=ce12e8f731df6aa3d40e9b1000dcd0722a62a73e"
 
   name               = "${var.environment}-tfstate"
   storage_account_id = data.azurerm_storage_account.bootstrap.id
@@ -128,7 +128,7 @@ resource "azurerm_role_assignment" "bootstrap_storage_key_operator" {
 }
 
 module "sensors_storage_container" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=c5433eeab8738e2a40d45665167a3d7d83bf1b03"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/storage-container?ref=ce12e8f731df6aa3d40e9b1000dcd0722a62a73e"
 
   name               = "sensors"
   storage_account_id = module.storage_account.id
@@ -136,7 +136,7 @@ module "sensors_storage_container" {
 }
 
 module "eventhub_namespace" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/eventhub-namespace?ref=c5433eeab8738e2a40d45665167a3d7d83bf1b03"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/eventhub-namespace?ref=ce12e8f731df6aa3d40e9b1000dcd0722a62a73e"
 
   resource_group_name          = module.resource_group.name
   name                         = var.name
@@ -151,7 +151,7 @@ module "eventhub_namespace" {
 }
 
 module "log_analytics" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/log-analytics?ref=c5433eeab8738e2a40d45665167a3d7d83bf1b03"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/log-analytics?ref=ce12e8f731df6aa3d40e9b1000dcd0722a62a73e"
 
   resource_group_name       = module.resource_group.name
   name                      = var.name
@@ -164,7 +164,7 @@ module "log_analytics" {
 }
 
 module "aks" {
-  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/kubernetes-cluster?ref=c5433eeab8738e2a40d45665167a3d7d83bf1b03"
+  source = "git::https://github.com/mbrickerd/terraform-azure-modules.git//modules/kubernetes-cluster?ref=ce12e8f731df6aa3d40e9b1000dcd0722a62a73e"
 
   resource_group_name = module.resource_group.name
   name                = var.name
@@ -178,6 +178,7 @@ module "aks" {
   enable_auto_scaling       = true
   min_count                 = 2
   max_count                 = 5
+  node_count                = null
 
   network_plugin      = "azure"
   network_plugin_mode = "overlay"

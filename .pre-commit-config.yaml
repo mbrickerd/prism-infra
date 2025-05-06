@@ -34,5 +34,5 @@ repos:
     rev: 3.2.394
     hooks:
       - id: checkov
-        args: ["--config-file=checkov.yaml"]
+        args: ["--config-file=checkov.yaml", "--download-external-modules=true"]
         name: "🔒 Running Checkov"
